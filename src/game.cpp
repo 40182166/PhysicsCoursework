@@ -1,6 +1,8 @@
+#define GLM_ENABLE_EXPERIMENTAL
 #include "game.h"
 #include <algorithm>
 #include <glm/gtx/transform.hpp>
+
 using namespace glm;
 using namespace std;
 Component::Component(const string &token) {
