@@ -19,12 +19,12 @@ static unique_ptr<Entity> floorEnt;
 static vector<unique_ptr<Entity>> balls;
 
 float springConstant = 2.0f;
-float naturalLength = 2.0f;
+float naturalLength = 8.0f;
 
 
-unique_ptr<Entity> CreateParticle(int xPos) {
+unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos) {
 	unique_ptr<Entity> ent(new Entity());
-	ent->SetPosition(vec3(xPos, 1, 0));
+	ent->SetPosition(vec3(xPos, yPos, zPos));
 	unique_ptr<Component> physComponent(new cPhysics());
 	unique_ptr<cShapeRenderer> renderComponent(new cShapeRenderer(cShapeRenderer::SPHERE));
 	renderComponent->SetColour(phys::RandomColour());
@@ -37,22 +37,36 @@ unique_ptr<Entity> CreateParticle(int xPos) {
 
 void CreateSpring(const vector<unique_ptr<Entity>> &particles, float originalLength, float k)
 {
-	auto force = particles[1]->GetPosition() - particles[0]->GetPosition();
-	float length = glm::length(force);
-	length = abs(length - originalLength) * k;
+	for (int i = 0; i < particles.size() - 1; i++)
+	{
+		vec3 force = particles[i+1]->GetPosition() - particles[i]->GetPosition();
+		float magnitude = glm::length(force);
+		magnitude = abs(magnitude - originalLength) * k;
 
-	auto springNormal = normalize(force);
-	force = springNormal * (-length);
-	auto b = particles[0]->GetComponents("Physics");
-	if (b.size() == 1) {
-		const auto p = static_cast<cPhysics *>(b[0]);
-		p->forces -= force;
-	}
+		auto springNormal = normalize(force);
+		force = springNormal * (-magnitude);
 
-	b = particles[1]->GetComponents("Physics");
-	if (b.size() == 1) {
-		const auto p = static_cast<cPhysics *>(b[0]);
-		p->forces += force;
+		auto b = particles[i]->GetComponents("Physics");
+		if (b.size() == 1) {
+			const auto p = static_cast<cPhysics *>(b[0]);
+			//p->forces.x -= force.x / p->mass;
+			//p->forces.y -= force.y / p->mass;
+			//p->forces.z -= force.z / p->mass;
+			p->forces -= force;
+		}
+
+		/*if (i == 0)
+		{
+			
+			
+		}
+		else
+		{
+			if (b.size() == 1) {
+				const auto p = static_cast<cPhysics *>(b[0]);
+				p->forces += force;
+			}
+		}*/
 	}
 }
 
@@ -79,14 +93,19 @@ bool update(double delta_time) {
 }
 
 bool load_content() {
-	int posX = -20;
 	phys::Init();
-	for (size_t i = 0; i < 6; i++) {
-		ClothParticles.push_back(move(CreateParticle(posX)));
-		posX = posX + 10;
+
+	for (int x = -4; x < 5; x++)
+	{
+		for (int z = -4; z < 5; z++)
+			
+		{
+			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 1.0f, z * 5.0f);
+			ClothParticles.push_back(move(particle));
+		}
 	}
 
-	CreateSpring(ClothParticles, naturalLength, springConstant);
+
 
 	floorEnt = unique_ptr<Entity>(new Entity());
 	floorEnt->AddComponent(unique_ptr<Component>(new cPlaneCollider()));
