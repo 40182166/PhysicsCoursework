@@ -7,6 +7,7 @@ public:
   ~cPhysics();
   glm::vec3 position;
   glm::vec3 prev_position;
+  glm::dvec3 velocity;
   glm::dvec3 forces;
   double mass;
   virtual void Update(double delta);
@@ -24,6 +25,41 @@ public:
 
 private:
 };
+
+class cSpring
+{
+	cPhysics *other;
+	float springConstant;
+	float restLength;
+public:
+	cSpring(cPhysics *other, float springConstant, float restLength);
+	virtual void update(cPhysics *particle, double delta);
+};
+
+//class ParticleForceGenerator
+//{
+//public:
+//	virtual void Update(Entity *particle, double delta) = 0;
+//};
+//
+//class ParticleForceRegistry
+//{
+//protected:
+//	struct ParticleForceRegistration
+//	{
+//		Entity *particle;
+//		ParticleForceGenerator *fg;
+//	};
+//
+//	typedef std::vector<ParticleForceRegistration> Registry;
+//	Registry registrations;
+//
+//public:
+//	void add(Entity *particle, ParticleForceGenerator *fg);
+//	void remove(Entity *particle, ParticleForceGenerator *fg);
+//	void clear();
+//	void Update(double delta);
+//};
 
 class cRigidBody : public cPhysics {
 public:

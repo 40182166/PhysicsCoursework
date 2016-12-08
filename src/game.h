@@ -24,6 +24,15 @@ public:
   Entity *GetParent() const;
 };
 
+//class Particle
+//{
+//	glm::vec3 position;
+//	glm::vec3 velocity;
+//	glm::vec3 acceleration;
+//	float damping;
+//	float inverseMass;
+//};
+
 class Entity {
 protected:
   bool visible_;

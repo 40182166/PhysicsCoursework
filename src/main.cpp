@@ -14,12 +14,13 @@ using namespace glm;
 #define physics_tick 1.0 / 60.0
 
 static vector<unique_ptr<Entity>> ClothParticles;
+static vector<cSpring> springList;
 static unique_ptr<Entity> floorEnt;
 
 static vector<unique_ptr<Entity>> balls;
 
-float springConstant = 2.0f;
-float naturalLength = 8.0f;
+float springConstant = 10.0f;
+float naturalLength = 2.0f;
 
 
 unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos) {
@@ -34,41 +35,6 @@ unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos) {
 	return ent;
 }
 
-
-void CreateSpring(const vector<unique_ptr<Entity>> &particles, float originalLength, float k)
-{
-	for (int i = 0; i < particles.size() - 1; i++)
-	{
-		vec3 force = particles[i+1]->GetPosition() - particles[i]->GetPosition();
-		float magnitude = glm::length(force);
-		magnitude = abs(magnitude - originalLength) * k;
-
-		auto springNormal = normalize(force);
-		force = springNormal * (-magnitude);
-
-		auto b = particles[i]->GetComponents("Physics");
-		if (b.size() == 1) {
-			const auto p = static_cast<cPhysics *>(b[0]);
-			//p->forces.x -= force.x / p->mass;
-			//p->forces.y -= force.y / p->mass;
-			//p->forces.z -= force.z / p->mass;
-			p->forces -= force;
-		}
-
-		/*if (i == 0)
-		{
-			
-			
-		}
-		else
-		{
-			if (b.size() == 1) {
-				const auto p = static_cast<cPhysics *>(b[0]);
-				p->forces += force;
-			}
-		}*/
-	}
-}
 
 
 bool update(double delta_time) {
@@ -86,7 +52,14 @@ bool update(double delta_time) {
 		e->Update(delta_time);
 	}
 
-	CreateSpring(ClothParticles, naturalLength, springConstant);
+	for (int i = 0; i < springList.size() - 1; i++)
+	{
+		auto b = ClothParticles[i+1]->GetComponents("Physics");
+		const auto p = static_cast<cPhysics *>(b[0]);
+
+		springList[i].update(p, 1.0);
+	}
+	
 
 	phys::Update(delta_time);
 	return true;
@@ -97,14 +70,22 @@ bool load_content() {
 
 	for (int x = -4; x < 5; x++)
 	{
-		for (int z = -4; z < 5; z++)
+		//for (int z = -4; z < 5; z++)
 			
-		{
-			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 1.0f, z * 5.0f);
+		//{
+			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 1.0f, 5.0f);
 			ClothParticles.push_back(move(particle));
-		}
+		//}
 	}
+	
+	for (auto &e : ClothParticles) {
+		auto b = e->GetComponents("Physics");
+		const auto p = static_cast<cPhysics *>(b[0]);
 
+		cSpring spring = cSpring(p, springConstant, naturalLength);
+
+		springList.push_back(spring);
+	}
 
 
 	floorEnt = unique_ptr<Entity>(new Entity());

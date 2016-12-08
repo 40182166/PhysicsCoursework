@@ -53,6 +53,7 @@ void cPhysics::SetParent(Entity *p) {
 
 void cPhysics::AddImpulse(const glm::vec3 &i) { forces += i; }
 
+
 void UpdatePhysics(const double t, const double dt) {
   std::vector<collisionInfo> collisions;
   // check for collisions
@@ -78,16 +79,16 @@ void UpdatePhysics(const double t, const double dt) {
   for (auto &e : physicsScene) {
     e->Render();
     // calcualte velocity from current and previous position
-    dvec3 velocity = e->position - e->prev_position;
+    e->velocity = e->position - e->prev_position;
 	if (flag)
 	{
-		velocity += initialV;
+		e->velocity += initialV;
 		flag = false;
 	}
     // set previous position to current position
     e->prev_position = e->position;
     // position += v + a * (dt^2)
-    e->position += velocity + (e->forces + gravity) * pow(dt, 2);
+    e->position += e->velocity + (e->forces + gravity) * pow(dt, 2);
     e->forces = dvec3(0);
     if (e->position.y <= 0.0f) {
       //  e->prev_position = e->position + (e->position - e->prev_position);
@@ -131,3 +132,35 @@ cSphereCollider::~cSphereCollider() {}
 cPlaneCollider::cPlaneCollider() : normal(dvec3(0, 1.0, 0)), cCollider("PlaneCollider") {}
 
 cPlaneCollider::~cPlaneCollider() {}
+
+cSpring::cSpring(cPhysics *other, float sc, float rl) : other(other), springConstant(sc), restLength(rl)
+{
+}
+
+
+void cSpring::update(cPhysics *particle, double delta)
+{
+	vec3 force = particle->position;
+	force -= other->position;
+
+	float magnitude = length(force);
+	magnitude = abs(magnitude - restLength);
+	magnitude *= springConstant;
+
+	force = normalize(force);
+	force *= -magnitude;
+	particle->AddImpulse(force);
+	other->AddImpulse(-force);
+}
+
+
+
+
+//void ParticleForceRegistry::Update(double delta)
+//{
+//	Registry::iterator i = registrations.begin();
+//	for (; i != registrations.end(); i++)
+//	{
+//		i->fg->Update(i->particle, delta);
+//	}
+//}
