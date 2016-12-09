@@ -88,7 +88,15 @@ void UpdatePhysics(const double t, const double dt) {
     // set previous position to current position
     e->prev_position = e->position;
     // position += v + a * (dt^2)
-    e->position += e->velocity + (e->forces + gravity) * pow(dt, 2);
+	if (e->mass == 0.0)
+	{
+		e->position += e->velocity + (e->forces + (e->mass * gravity)) * pow(dt, 2);
+	}
+	else
+	{
+		e->position += e->velocity + ((e->forces * (1.0 / e->mass)) + gravity) * pow(dt, 2);
+	}
+    
     e->forces = dvec3(0);
     if (e->position.y <= 0.0f) {
       //  e->prev_position = e->position + (e->position - e->prev_position);
@@ -149,8 +157,8 @@ void cSpring::update(cPhysics *particle, double delta)
 
 	force = normalize(force);
 	force *= -magnitude;
-	particle->AddImpulse(force);
-	other->AddImpulse(-force);
+	particle->forces += force;
+	other->forces -= force;
 }
 
 
