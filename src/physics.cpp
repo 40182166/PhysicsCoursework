@@ -8,7 +8,7 @@ static vector<cCollider *> colliders;
 
 static dvec3 gravity = dvec3(0, -10.0, 0);
 static dvec3 initialV = dvec3(-0.1, 0.1, 0.0);
-bool flag = true;
+bool flag = false;
 
 void Resolve(const collisionInfo &ci) {
 
@@ -53,6 +53,21 @@ void cPhysics::SetParent(Entity *p) {
 
 void cPhysics::AddImpulse(const glm::vec3 &i) { forces += i; }
 
+float cPhysics::getX()
+{
+	return this->position.x;
+}
+
+float cPhysics::getY()
+{
+	return this->position.y;
+}
+
+float cPhysics::getZ()
+{
+	return this->position.z;
+}
+
 
 void UpdatePhysics(const double t, const double dt) {
   std::vector<collisionInfo> collisions;
@@ -88,14 +103,7 @@ void UpdatePhysics(const double t, const double dt) {
     // set previous position to current position
     e->prev_position = e->position;
     // position += v + a * (dt^2)
-	if (e->mass == 0.0)
-	{
-		e->position += e->velocity + (e->forces + (e->mass * gravity)) * pow(dt, 2);
-	}
-	else
-	{
 		e->position += e->velocity + ((e->forces * (1.0 / e->mass)) + gravity) * pow(dt, 2);
-	}
     
     e->forces = dvec3(0);
     if (e->position.y <= 0.0f) {
@@ -133,7 +141,7 @@ cCollider::~cCollider() {
 
 void cCollider::Update(double delta) {}
 
-cSphereCollider::cSphereCollider() : radius(1.0), cCollider("SphereCollider") {}
+cSphereCollider::cSphereCollider() : radius(0.3), cCollider("SphereCollider") {}
 
 cSphereCollider::~cSphereCollider() {}
 

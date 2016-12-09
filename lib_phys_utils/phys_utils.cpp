@@ -119,7 +119,7 @@ void DrawLine(const glm::vec3 &p0, const glm::vec3 &p1, const bool depth, const 
 void DrawSphere(const glm::vec3 &p0, float radius, const RGBAInt32 col) {
   static geometry geom = geometry_builder::create_sphere();
   renderer::bind(effP);
-  auto M = glm::translate(mat4(1.0f), p0) * glm::scale(mat4(1.0f), vec3(0.3));
+  auto M = glm::translate(mat4(1.0f), p0) * glm::scale(mat4(1.0f), vec3(radius));
   auto MVP = PV * M;
   mat3 N(1.0f);
   mat.set_diffuse(col.tovec4());

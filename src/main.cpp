@@ -5,11 +5,11 @@
 #include <graphics_framework.h>
 #include <phys_utils.h>
 #include <thread>
+#include "main.h"
 
 using namespace std;
 using namespace graphics_framework;
 using namespace glm;
-
 
 #define physics_tick 1.0 / 60.0
 
@@ -20,8 +20,7 @@ static unique_ptr<Entity> floorEnt;
 static vector<unique_ptr<Entity>> balls;
 
 float springConstant = 50.0f;
-float naturalLength = 2.0f;
-
+float naturalLength = 3.0f;
 
 unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
 	unique_ptr<Entity> ent(new Entity());
@@ -33,10 +32,56 @@ unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
 	renderComponent->SetColour(phys::RandomColour());
 	ent->AddComponent(physComponent);
 	cSphereCollider *coll = new cSphereCollider();
-	coll->radius = 0.3f;
+	coll->radius = 1.0f;
 	ent->AddComponent(unique_ptr<Component>(coll));
 	ent->AddComponent(unique_ptr<Component>(move(renderComponent)));
 	return ent;
+}
+
+void Cloth()
+{
+	for (int x = 0; x < 3; x++)
+	{
+		for (int z = 0; z < 3; z++)
+		{
+			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 20.0f, z * 5.0f, 10.0);
+			ClothParticles.push_back(move(particle));
+		}
+	}
+
+	for (auto &e : ClothParticles) {
+		auto p = static_cast<cPhysics *>(e->GetComponents("Physics")[0]);
+
+		cSpring spring = cSpring(p, springConstant, naturalLength);
+
+		springList.push_back(spring);
+	}
+}
+
+void updateCloth()
+{
+
+	for (int i = 0; i < 2; i++)
+	{
+
+			auto b = ClothParticles[i]->GetComponents("Physics");
+			const auto p = static_cast<cPhysics *>(b[0]);
+
+			springList[i+1].update(p, 1.0);
+
+	}
+
+	for (int i = 2; i < 4; i++)
+	{
+
+		auto b = ClothParticles[i]->GetComponents("Physics");
+		const auto p = static_cast<cPhysics *>(b[0]);
+
+		springList[i+1].update(p, 1.0);
+
+	}
+
+
 }
 
 
@@ -56,16 +101,10 @@ bool update(double delta_time) {
 		e->Update(delta_time);
 	}
 
-	for (int i = 0; i < springList.size() - 1; i++)
-	{
-		auto b = ClothParticles[i]->GetComponents("Physics");
-		const auto p = static_cast<cPhysics *>(b[0]);
-
-		springList[i+1].update(p, 1.0);
-	}
-	
-	auto p = static_cast<cPhysics*>(ClothParticles[4]->GetComponents("Physics")[0]);
-	p->position = p->prev_position;
+	updateCloth();
+	//
+	//auto p = static_cast<cPhysics*>(ClothParticles[4]->GetComponents("Physics")[0]);
+	//p->position = p->prev_position;
 
 	phys::Update(delta_time);
 	return true;
@@ -73,41 +112,20 @@ bool update(double delta_time) {
 
 bool load_content() {
 	phys::Init();
+	Cloth();
+	//for (int x = -4; x < 5; x++)
+	//{
+	//	//for (int z = -4; z < 5; z++)
+	//		
+	//	//{
 
-	for (int x = -4; x < 5; x++)
-	{
-		//for (int z = -4; z < 5; z++)
-			
-		//{
-		if (x == -4 )
-		{
-			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 20.0f, 5.0f, 20.0);
-			ClothParticles.push_back(move(particle));
-
-		}
-		else if (x == 4)
-		{
-			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 20.0f, 5.0f, 20.0);
-			ClothParticles.push_back(move(particle));
-
-		}
-		else
-		{
-			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 20.0f, 5.0f, 3.0);
-			ClothParticles.push_back(move(particle));
-		}
-		//}
-		
-	}
+	//		unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 20.0f, 5.0f);
+	//		ClothParticles.push_back(move(particle));
+	//	//}
+	//	
+	//}
+	//
 	
-	for (auto &e : ClothParticles) {
-		auto b = e->GetComponents("Physics");
-		const auto p = static_cast<cPhysics *>(b[0]);
-
-		cSpring spring = cSpring(p, springConstant, naturalLength);
-
-		springList.push_back(spring);
-	}
 
 
 	floorEnt = unique_ptr<Entity>(new Entity());
@@ -123,12 +141,12 @@ bool render() {
 	for (auto &e : ClothParticles) {
 		e->Render();
 	}
-	for (int i = 0; i < ClothParticles.size() - 1; i++)
+	/*for (int i = 0; i < ClothParticles.size() - 1; i++)
 	{
 		auto b = ClothParticles[i]->GetComponents("Physics");
 		const auto p = static_cast<cPhysics *>(b[0]);
 		phys::DrawLine(ClothParticles[i]->GetPosition(), ClothParticles[i+1]->GetPosition(), false, BLUE);
-	}
+	}*/
 
 	phys::DrawScene();
 	return true;

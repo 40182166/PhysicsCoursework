@@ -13,6 +13,9 @@ public:
   virtual void Update(double delta);
   virtual void SetParent(Entity *p);
   virtual void AddImpulse(const glm::vec3 &i);
+  virtual float getX();
+  virtual float getY();
+  virtual float getZ();
 
 private:
 };
