@@ -32,11 +32,13 @@ private:
 class cSpring
 {
 	cPhysics *other;
+	cPhysics *par;
 	float springConstant;
 	float restLength;
 public:
 	cSpring(cPhysics *other, float springConstant, float restLength);
 	virtual void update(cPhysics *particle, double delta);
+	virtual void drawSpring();
 };
 
 //class ParticleForceGenerator

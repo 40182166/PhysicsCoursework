@@ -156,6 +156,7 @@ cSpring::cSpring(cPhysics *other, float sc, float rl) : other(other), springCons
 
 void cSpring::update(cPhysics *particle, double delta)
 {
+	par = particle;
 	vec3 force = particle->position;
 	force -= other->position;
 
@@ -167,6 +168,11 @@ void cSpring::update(cPhysics *particle, double delta)
 	force *= -magnitude;
 	particle->forces += force;
 	other->forces -= force;
+}
+
+void cSpring::drawSpring()
+{
+	phys::DrawLine(this->other->position, this->par->position, false, BLUE);
 }
 
 
