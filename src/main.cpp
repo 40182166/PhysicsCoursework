@@ -19,9 +19,9 @@ static unique_ptr<Entity> floorEnt;
 
 static vector<unique_ptr<Entity>> balls;
 
-int rows = 5;
-float springConstant = 200.0f;
-float naturalLength = 3.0f;
+int rows = 10;
+float springConstant = 80.0f;
+float naturalLength = 2.0f;
 
 unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
 	unique_ptr<Entity> ent(new Entity());
@@ -57,8 +57,7 @@ void Cloth()
 	{
 		for (int z = 0; z < rows; z++)
 		{
-			//unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 1.0f, ((z)*5.0f)-10.0f  , 10.0);
-			unique_ptr<Entity> particle = CreateParticle(x * 3.0f, (z+3) * 3.0f, 0.0f, 1.0);
+			unique_ptr<Entity> particle = CreateParticle((x - 3) * 3.0, 1.0, (z - 5) * 3.0, 1.0);
 			auto p = static_cast<cPhysics *>(particle->GetComponents("Physics")[0]);
 			ClothParticles.push_back(move(particle));
 		}
@@ -108,15 +107,17 @@ void updateCloth()
 				aa.update(1.0);
 				springList.push_back(aa);
 			}
-			else if (x > 0 && z < (rows - 1))
+			if (x > 0 && z < (rows - 1))
 			{
-				//reverse diagonal spring
-				cSpring aa = cSpring(getParticle(x - 1, z + 1), getParticle(x, z), springConstant, (naturalLength * sqrt(2.0)));
-				aa.update(1.0);
-				springList.push_back(aa);
+			//reverse diagonal spring
+			cSpring aa = cSpring(getParticle(x - 1, z + 1), getParticle(x, z), springConstant, (naturalLength * sqrt(2.0)));
+			aa.update(1.0);
+			springList.push_back(aa);
 			}
 		}
 	}
+
+
 }
 
 
@@ -138,11 +139,11 @@ bool update(double delta_time) {
 
 	updateCloth();
 
-	getParticle(4, 4)->position = getParticle(4, 4)->prev_position;
-	getParticle(3, 4)->position = getParticle(3, 4)->prev_position;
-	getParticle(2, 4)->position = getParticle(2, 4)->prev_position;
-	getParticle(1, 4)->position = getParticle(1, 4)->prev_position;
-	getParticle(0, 4)->position = getParticle(0, 4)->prev_position;
+	//getParticle(4, 4)->position = getParticle(4, 4)->prev_position;
+	//getParticle(3, 4)->position = getParticle(3, 4)->prev_position;
+	//getParticle(2, 4)->position = getParticle(2, 4)->prev_position;
+	//getParticle(1, 4)->position = getParticle(1, 4)->prev_position;
+	//getParticle(0, 4)->position = getParticle(0, 4)->prev_position;
 
 	phys::Update(delta_time);
 	return true;
