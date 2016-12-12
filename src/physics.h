@@ -31,8 +31,8 @@ private:
 
 class cSpring
 {
-	cPhysics *other;
-	cPhysics *par;
+	cPhysics *a;
+	cPhysics *b;
 	float springConstant;
 	float restLength;
 public:

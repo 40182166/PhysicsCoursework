@@ -149,32 +149,29 @@ cPlaneCollider::cPlaneCollider() : normal(dvec3(0, 1.0, 0)), cCollider("PlaneCol
 
 cPlaneCollider::~cPlaneCollider() {}
 
-cSpring::cSpring(cPhysics *p, cPhysics *other, float sc, float rl) : par(p),other(other), springConstant(sc), restLength(rl)
+cSpring::cSpring(cPhysics *other, cPhysics *p, float sc, float rl) : b(p),a(other), springConstant(sc), restLength(rl)
 {
 }
-
 
 void cSpring::update(double delta)
 {
 
-//	phys::DrawLine(particle->position, other->position, false, BLUE);
-	/*par = particle;*/
-	vec3 force = par->position;
-	force -= other->position;
+	vec3 force = b->position;
+	force -= a->position;
 
 	float magnitude = length(force);
-	magnitude = abs(magnitude - restLength);
+	magnitude = magnitude - restLength;
 	magnitude *= springConstant;
 
 	force = normalize(force);
-	force *= -magnitude *  (restLength / springConstant);
-	par->AddImpulse(force);
-	other->AddImpulse(-force);
+	force *= -magnitude;
+	b->AddImpulse(force);
+	a->AddImpulse(-force);
 }
 
 void cSpring::Render()
 {
-	phys::DrawLine(this->other->position, this->par->position, false, BLUE);
+	phys::DrawLine(this->a->position, this->b->position, false, BLUE);
 }
 
 
