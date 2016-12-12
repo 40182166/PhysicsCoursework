@@ -16,7 +16,7 @@ public:
   virtual float getX();
   virtual float getY();
   virtual float getZ();
-
+  virtual void Render() {};
 private:
 };
 
@@ -25,7 +25,7 @@ public:
   cParticle();
   ~cParticle();
   void Update(double delta);
-
+  virtual void Render() {};
 private:
 };
 
@@ -36,9 +36,9 @@ class cSpring
 	float springConstant;
 	float restLength;
 public:
-	cSpring(cPhysics *other, float springConstant, float restLength);
-	virtual void update(cPhysics *particle, double delta);
-	virtual void drawSpring();
+	cSpring(cPhysics *particle, cPhysics *other, float springConstant, float restLength);
+	virtual void update( double delta);
+	void Render();
 };
 
 //class ParticleForceGenerator

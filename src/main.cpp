@@ -19,8 +19,8 @@ static unique_ptr<Entity> floorEnt;
 
 static vector<unique_ptr<Entity>> balls;
 
-float springConstant = 50.0f;
-float naturalLength = 5.0f;
+float springConstant = 20.0f;
+float naturalLength = 3.0f;
 
 unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
 	unique_ptr<Entity> ent(new Entity());
@@ -40,87 +40,85 @@ unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
 
 cPhysics *getParticle(int x, int z)
 {
-	auto p = static_cast<cPhysics *>(ClothParticles[x * 5 + z]->GetComponents("Physics")[0]);
+	auto p = static_cast<cPhysics *>(ClothParticles[x * 3 + z]->GetComponents("Physics")[0]);
 	return p;
 }
 
 cSpring getSpring(int x, int z)
 {
-	auto p = springList[x * 5 + z];
+	auto p = springList[x * 3 + z];
 	return p;
 }
 
 void Cloth()
 {
-	for (int x = 0; x < 5; x++)
+	for (int x = 0; x < 3; x++)
 	{
-		for (int z = 0; z < 5; z++)
+		for (int z = 0; z < 3; z++)
 		{
-			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 1.0f, z * 5.0f, 10.0);
+			//unique_ptr<Entity> particle = CreateParticle(x * 5.0f, 1.0f, ((z)*5.0f)-10.0f  , 10.0);
+			unique_ptr<Entity> particle = CreateParticle(x * 5.0f, ((z+1)*5.0f), 00.0f, 1.0);
 			auto p = static_cast<cPhysics *>(particle->GetComponents("Physics")[0]);
 			ClothParticles.push_back(move(particle));
 
-			cSpring spring = cSpring(p, springConstant, naturalLength);
-			springList.push_back(spring);
+			//cSpring spring = cSpring(p, springConstant, naturalLength);
+			//springList.push_back(spring);
 		}
 	}
 }
 
 void updateCloth()
 {
-	for (int x = 0; x < 5; x++)
+	springList.clear();
+	for (int x = 0; x < 3; x++)
 	{
-		for (int z = 0; z < 5; z++)
+		for (int z = 0; z < 3; z++)
 		{
 
-			if (z + 1 >= 5 && z != 4)
+			if (z == 2)
 			{
-				//horizontal spring
-				cSpring(getParticle(x, z), springConstant, naturalLength).update(getParticle(x + 1, z), 1.0);
+				if (x + 1 != 3)
+				{
+					//horizontal spring
+					cSpring aa = cSpring(getParticle(x + 1, z), getParticle(x, z), springConstant, naturalLength);
+					aa.update(1.0);
+					springList.push_back(aa);
+				}
 			}
-			else if (x + 1 >= 5 && x != 4)
+			else if (x == 2)
 			{
+				if (z + 1 != 3)
+				{
+					//vertical spring
+					cSpring aa = cSpring(getParticle(x, z + 1), getParticle(x, z), springConstant, naturalLength);
+					aa.update(1.0);
+					springList.push_back(aa);
+				}
+			}
+			else if (x != 2 && z != 2)
+			{
+				////diagonal spring
+				//cSpring aa = cSpring(getParticle(x + 1, z + 1), getParticle(x, z), springConstant*0.5, (naturalLength * sqrt(2.0)));
+				//aa.update(1.0);
+				//springList.push_back(aa);
 				//vertical spring
-				cSpring(getParticle(x, z), springConstant, naturalLength).update(getParticle(x, z + 1), 1.0);
-			}
-			else if (x != 4 && z != 4)
-			{
-				//diagonal spring
-				cSpring(getParticle(x, z), springConstant, (naturalLength * sqrt(2))).update(getParticle(x + 1, z + 1), 1.0);
-				//vertical spring
-				cSpring(getParticle(x, z), springConstant, naturalLength).update(getParticle(x, z + 1), 1.0);
+				auto aa = cSpring(getParticle(x, z + 1), getParticle(x, z), springConstant, naturalLength);
+				aa.update(1.0);
+				springList.push_back(aa);
 				//horizontal spring
-				cSpring(getParticle(x, z), springConstant, naturalLength).update(getParticle(x + 1, z), 1.0);
+				aa = cSpring(getParticle(x + 1, z), getParticle(x, z), springConstant, naturalLength);
+				aa.update(1.0);
+				springList.push_back(aa);
 			}
-			else if (x == 1 && z == 1)
+			else if (x > 0 && z < 2)
 			{
 				//reverse diagonal spring
-				cSpring(getParticle(x, z), springConstant, (naturalLength * sqrt(2))).update(getParticle(x - 1, z - 1), 1.0);
+				//cSpring aa = cSpring(getParticle(x - 1, z + 1), getParticle(x, z), springConstant, (naturalLength * sqrt(2.0)));
+				//aa.update(1.0);
+				//springList.push_back(aa);
 			}
 		}
 	}
-
-	//reverse diagonals
-	//for (int x = 0; x < 5; x--)
-	//{
-	//	for (int z = 0; z < 5; z--)
-	//	{
-
-	//		//else if (x + 1 >= 5 && x != 4)
-	//		//{
-	//		//	//vertical spring
-	//		//	cSpring(getParticle(x, z), springConstant, naturalLength).update(getParticle(x, z + 1), 1.0);
-	//		//}
-	//		//else if (x != 4 && z != 4)
-	//		//{
-
-	//		//	//vertical spring
-	//		//	cSpring(getParticle(x, z), springConstant, naturalLength).update(getParticle(x, z + 1), 1.0);
-	//		//	//horizontal spring
-	//		//	cSpring(getParticle(x, z), springConstant, naturalLength).update(getParticle(x + 1, z), 1.0);
-	//		//}
-	//	}
-	//}
 }
 
 
@@ -142,12 +140,14 @@ bool update(double delta_time) {
 
 	updateCloth();
 
-	//getParticle(0, 0)->prev_position = vec3(0.0, 20.0, 0.0);
-	//getParticle(0, 0)->position = getParticle(0, 0)->prev_position;
-	//getParticle(0, 1)->prev_position = vec3(5.0, 20.0, 5.0);
-	//getParticle(0, 1)->position = getParticle(0, 1)->prev_position;
-	//getParticle(0, 2)->prev_position = vec3(15.0, 20.0, 15.0);
-	//getParticle(0, 2)->position = getParticle(0, 1)->prev_position;
+	////getParticle(0, 0)->prev_position = vec3(0.0, 20.0, 0.0);
+	getParticle(2, 2)->position = getParticle(2, 2)->prev_position;
+	////getParticle(0, 1)->prev_position = vec3(5.0, 20.0, 5.0);
+	getParticle(1, 2)->position = getParticle(1, 2)->prev_position;
+	////getParticle(0, 2)->prev_position = vec3(15.0, 20.0, 15.0);
+	getParticle(0, 2)->position = getParticle(0, 2)->prev_position;
+	//getParticle(1, 4)->position = getParticle(1, 4)->prev_position;
+	//getParticle(0, 4)->position = getParticle(0, 4)->prev_position;
 
 	phys::Update(delta_time);
 	return true;
@@ -172,6 +172,7 @@ bool render() {
 	for (auto &e : ClothParticles) {
 		e->Render();
 	}
+
 	/*for (int i = 0; i < ClothParticles.size() - 1; i++)
 	{
 		auto b = ClothParticles[i]->GetComponents("Physics");
@@ -179,6 +180,9 @@ bool render() {
 		phys::DrawLine(ClothParticles[i]->GetPosition(), ClothParticles[i+1]->GetPosition(), false, BLUE);
 	}*/
 	phys::DrawScene();
+	for (auto &e : springList) {
+		e.Render();
+	}
 	return true;
 }
 
