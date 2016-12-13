@@ -153,7 +153,7 @@ cPlaneCollider::cPlaneCollider() : normal(dvec3(0, 1.0, 0)), cCollider("PlaneCol
 
 cPlaneCollider::~cPlaneCollider() {}
 
-cSpring::cSpring(cPhysics *other, cPhysics *p, float sc, float rl, float damper) : b(p),a(other), springConstant(sc), restLength(rl), dampingFactor(damper)
+cSpring::cSpring(cPhysics *other, cPhysics *p, float sc, float rl, float damper, phys::RGBAInt32 c) : b(p),a(other), springConstant(sc), restLength(rl), dampingFactor(damper), col(c)
 {
 }
 
@@ -173,13 +173,15 @@ void cSpring::update(double delta)
 	vec3 dampForce = b->velocity - a->velocity;
 	dampForce *= dampingFactor;
 	force -= dampForce;
+
 	b->AddImpulse(force);
 	a->AddImpulse(-force);
+
 }
 
 void cSpring::Render()
 {
-	phys::DrawLine(this->a->position, this->b->position, false, BLUE);
+	phys::DrawLine(this->a->position, this->b->position, false, this->col);
 }
 
 

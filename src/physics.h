@@ -34,11 +34,12 @@ class cSpring
 {
 	cPhysics *a;
 	cPhysics *b;
+	phys::RGBAInt32 col;
 	float springConstant;
 	float dampingFactor;
 	float restLength;
 public:
-	cSpring(cPhysics *particle, cPhysics *other, float springConstant, float restLength, float damping);
+	cSpring(cPhysics *particle, cPhysics *other, float springConstant, float restLength, float damping, phys::RGBAInt32 col);
 	virtual void update( double delta);
 	void Render();
 };

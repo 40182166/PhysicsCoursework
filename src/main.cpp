@@ -19,10 +19,12 @@ static unique_ptr<Entity> floorEnt;
 
 static vector<unique_ptr<Entity>> balls;
 
-int rows = 10;
-float springConstant = 50.0f;
+int rows = 9;
+float stretchConstant = 60.0f;
+float shearConstant = 30.0f;
+float bendingConstant = 1.0f;
 float naturalLength = 2.0f;
-float dampingFactor = 200.0f;
+float dampingFactor = 100.0f;
 
 unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
 	unique_ptr<Entity> ent(new Entity());
@@ -58,7 +60,7 @@ void Cloth()
 	{
 		for (int z = 0; z < rows; z++)
 		{
-			unique_ptr<Entity> particle = CreateParticle(x*2.0, (z + 7)*2.0, -20.0, 0.5);
+			unique_ptr<Entity> particle = CreateParticle(x*2.0, (z + 7)*2.0, -20.0, 1.0);
 			auto p = static_cast<cPhysics *>(particle->GetComponents("Physics")[0]);
 			ClothParticles.push_back(move(particle));
 		}
@@ -68,52 +70,95 @@ void Cloth()
 void updateCloth()
 {
 	springList.clear();
+
 	for (int x = 0; x < rows; x++)
 	{
 		for (int z = 0; z < rows; z++)
 		{
+			//structural and shear springs
 			if (z == (rows - 1))
 			{
 				if (x + 1 != rows)
 				{
-					//horizontal spring
-					cSpring aa = cSpring(getParticle(x + 1, z), getParticle(x, z), springConstant, naturalLength, dampingFactor);
+					//horizontal structural spring
+					cSpring aa = cSpring(getParticle(x + 1, z), getParticle(x, z), stretchConstant, naturalLength, dampingFactor, BLUE);
 					aa.update(1.0);
 					springList.push_back(aa);
+
 				}
 			}
 			else if (x == (rows - 1))
 			{
 				if (z + 1 != rows)
 				{
-					//vertical spring
-					cSpring aa = cSpring(getParticle(x, z + 1), getParticle(x, z), springConstant, naturalLength, dampingFactor);
+					//vertical structural spring
+					cSpring aa = cSpring(getParticle(x, z + 1), getParticle(x, z), stretchConstant, naturalLength, dampingFactor, BLUE);
 					aa.update(1.0);
 					springList.push_back(aa);
 				}
 			}
 			else if (x != (rows - 1) && z != (rows - 1))
 			{
-				//diagonal spring
-				cSpring aa = cSpring(getParticle(x + 1, z + 1), getParticle(x, z), springConstant, (naturalLength * sqrt(2.0)), dampingFactor);
+
+				//diagonal shear spring
+				cSpring aa = cSpring(getParticle(x + 1, z + 1), getParticle(x, z), shearConstant, (naturalLength * sqrt(2.0)), dampingFactor, GREEN);
 				aa.update(1.0);
 				springList.push_back(aa);
-				//vertical spring
-				aa = cSpring(getParticle(x, z + 1), getParticle(x, z), springConstant, naturalLength, dampingFactor);
+				//vertical structural spring
+				aa = cSpring(getParticle(x, z + 1), getParticle(x, z), stretchConstant, naturalLength, dampingFactor, BLUE);
 				aa.update(1.0);
 				springList.push_back(aa);
-				//horizontal spring
-				aa = cSpring(getParticle(x + 1, z), getParticle(x, z), springConstant, naturalLength, dampingFactor);
+				//horizontal structural spring
+				aa = cSpring(getParticle(x + 1, z), getParticle(x, z), stretchConstant, naturalLength, dampingFactor, BLUE);
 				aa.update(1.0);
 				springList.push_back(aa);
 			}
 			if (x > 0 && z < (rows - 1))
 			{
-			//reverse diagonal spring
-			cSpring aa = cSpring(getParticle(x - 1, z + 1), getParticle(x, z), springConstant, (naturalLength * sqrt(2.0)), dampingFactor);
+			//reverse diagonal shear spring
+			cSpring aa = cSpring(getParticle(x - 1, z + 1), getParticle(x, z), shearConstant, (naturalLength * sqrt(2.0)), dampingFactor, GREEN);
 			aa.update(1.0);
 			springList.push_back(aa);
 			}
+
+			//Bending springs
+			if (z % 2 == 0 || z == 0)
+			{
+				////diagonal shear spring
+				//cSpring aa = cSpring(getParticle(x + 2, z + 2), getParticle(x, z), bendingConstant, (naturalLength * sqrt(2.0)), dampingFactor, GREEN);
+				//aa.update(1.0);
+				//springList.push_back(aa);
+				if (z + 2 < rows)
+				{
+					//vertical bending spring
+					cSpring aa = cSpring(getParticle(x, z + 2), getParticle(x, z), bendingConstant, naturalLength * 2, dampingFactor, RED);
+					aa.update(1.0);
+					springList.push_back(aa);
+				}
+			}
+
+			if (x % 2 == 0 || x == 0)
+			{
+				if (x + 2 < rows)
+				{
+					//horizontal bending spring
+					cSpring	aa = cSpring(getParticle(x + 2, z), getParticle(x, z), bendingConstant, naturalLength * 2.0, dampingFactor, ORANGE);
+					aa.update(1.0);
+					springList.push_back(aa);
+				}
+			}
+
+			if (z % 2 == 0 && x % 2 == 0)
+			{
+				if (x + 2 < rows && z + 2 < rows)
+				{
+					//diagonal shear spring
+					cSpring aa = cSpring(getParticle(x + 2, z + 2), getParticle(x, z), 50.0, (naturalLength * sqrt(2.0)) * 4, dampingFactor, AQUA);
+					aa.update(1.0);
+					springList.push_back(aa);
+				}
+			}
+
 		}
 	}
 }
