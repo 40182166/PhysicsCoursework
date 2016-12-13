@@ -10,6 +10,7 @@ public:
   glm::dvec3 velocity;
   glm::dvec3 forces;
   double mass;
+  bool fixed = false;
   virtual void Update(double delta);
   virtual void SetParent(Entity *p);
   virtual void AddImpulse(const glm::vec3 &i);
@@ -34,9 +35,10 @@ class cSpring
 	cPhysics *a;
 	cPhysics *b;
 	float springConstant;
+	float dampingFactor;
 	float restLength;
 public:
-	cSpring(cPhysics *particle, cPhysics *other, float springConstant, float restLength);
+	cSpring(cPhysics *particle, cPhysics *other, float springConstant, float restLength, float damping);
 	virtual void update( double delta);
 	void Render();
 };

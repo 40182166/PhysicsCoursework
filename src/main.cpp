@@ -20,8 +20,9 @@ static unique_ptr<Entity> floorEnt;
 static vector<unique_ptr<Entity>> balls;
 
 int rows = 10;
-float springConstant = 80.0f;
+float springConstant = 50.0f;
 float naturalLength = 2.0f;
+float dampingFactor = 200.0f;
 
 unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
 	unique_ptr<Entity> ent(new Entity());
@@ -57,7 +58,7 @@ void Cloth()
 	{
 		for (int z = 0; z < rows; z++)
 		{
-			unique_ptr<Entity> particle = CreateParticle((x - 3) * 3.0, 1.0, (z - 5) * 3.0, 1.0);
+			unique_ptr<Entity> particle = CreateParticle(x*2.0, (z + 7)*2.0, -20.0, 0.5);
 			auto p = static_cast<cPhysics *>(particle->GetComponents("Physics")[0]);
 			ClothParticles.push_back(move(particle));
 		}
@@ -71,13 +72,12 @@ void updateCloth()
 	{
 		for (int z = 0; z < rows; z++)
 		{
-
 			if (z == (rows - 1))
 			{
 				if (x + 1 != rows)
 				{
 					//horizontal spring
-					cSpring aa = cSpring(getParticle(x + 1, z), getParticle(x, z), springConstant, naturalLength);
+					cSpring aa = cSpring(getParticle(x + 1, z), getParticle(x, z), springConstant, naturalLength, dampingFactor);
 					aa.update(1.0);
 					springList.push_back(aa);
 				}
@@ -87,40 +87,48 @@ void updateCloth()
 				if (z + 1 != rows)
 				{
 					//vertical spring
-					cSpring aa = cSpring(getParticle(x, z + 1), getParticle(x, z), springConstant, naturalLength);
+					cSpring aa = cSpring(getParticle(x, z + 1), getParticle(x, z), springConstant, naturalLength, dampingFactor);
 					aa.update(1.0);
 					springList.push_back(aa);
 				}
 			}
 			else if (x != (rows - 1) && z != (rows - 1))
 			{
-				////diagonal spring
-				cSpring aa = cSpring(getParticle(x + 1, z + 1), getParticle(x, z), springConstant*0.5, (naturalLength * sqrt(2.0)));
+				//diagonal spring
+				cSpring aa = cSpring(getParticle(x + 1, z + 1), getParticle(x, z), springConstant, (naturalLength * sqrt(2.0)), dampingFactor);
 				aa.update(1.0);
 				springList.push_back(aa);
 				//vertical spring
-				aa = cSpring(getParticle(x, z + 1), getParticle(x, z), springConstant, naturalLength);
+				aa = cSpring(getParticle(x, z + 1), getParticle(x, z), springConstant, naturalLength, dampingFactor);
 				aa.update(1.0);
 				springList.push_back(aa);
 				//horizontal spring
-				aa = cSpring(getParticle(x + 1, z), getParticle(x, z), springConstant, naturalLength);
+				aa = cSpring(getParticle(x + 1, z), getParticle(x, z), springConstant, naturalLength, dampingFactor);
 				aa.update(1.0);
 				springList.push_back(aa);
 			}
 			if (x > 0 && z < (rows - 1))
 			{
 			//reverse diagonal spring
-			cSpring aa = cSpring(getParticle(x - 1, z + 1), getParticle(x, z), springConstant, (naturalLength * sqrt(2.0)));
+			cSpring aa = cSpring(getParticle(x - 1, z + 1), getParticle(x, z), springConstant, (naturalLength * sqrt(2.0)), dampingFactor);
 			aa.update(1.0);
 			springList.push_back(aa);
 			}
 		}
 	}
-
-
 }
 
-
+void fixTopRow()
+{
+	int z = rows - 1;
+	int x = 0;
+	while (x < rows)
+	{
+		getParticle(x, z)->position = getParticle(x, z)->prev_position;
+		getParticle(x, z)->fixed = true;
+		x++;
+	}
+}
 
 bool update(double delta_time) {
 	static double t = 0.0;
@@ -138,12 +146,7 @@ bool update(double delta_time) {
 	}
 
 	updateCloth();
-
-	//getParticle(4, 4)->position = getParticle(4, 4)->prev_position;
-	//getParticle(3, 4)->position = getParticle(3, 4)->prev_position;
-	//getParticle(2, 4)->position = getParticle(2, 4)->prev_position;
-	//getParticle(1, 4)->position = getParticle(1, 4)->prev_position;
-	//getParticle(0, 4)->position = getParticle(0, 4)->prev_position;
+	fixTopRow();
 
 	phys::Update(delta_time);
 	return true;
@@ -152,12 +155,9 @@ bool update(double delta_time) {
 bool load_content() {
 	phys::Init();
 	Cloth();
-
-
-
 	floorEnt = unique_ptr<Entity>(new Entity());
 	floorEnt->AddComponent(unique_ptr<Component>(new cPlaneCollider()));
-
+	
 	phys::SetCameraPos(vec3(10.0f, 40.0f, -50.0f));
 	phys::SetCameraTarget(vec3(0.0f, 0.0f, 0));
 	InitPhysics();
@@ -169,13 +169,8 @@ bool render() {
 		e->Render();
 	}
 
-	/*for (int i = 0; i < ClothParticles.size() - 1; i++)
-	{
-		auto b = ClothParticles[i]->GetComponents("Physics");
-		const auto p = static_cast<cPhysics *>(b[0]);
-		phys::DrawLine(ClothParticles[i]->GetPosition(), ClothParticles[i+1]->GetPosition(), false, BLUE);
-	}*/
 	phys::DrawScene();
+
 	for (auto &e : springList) {
 		e.Render();
 	}

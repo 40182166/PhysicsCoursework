@@ -93,6 +93,10 @@ void UpdatePhysics(const double t, const double dt) {
   // Integrate
   for (auto &e : physicsScene) {
     e->Render();
+	if (e->fixed == true)
+	{
+		continue;
+	}
     // calcualte velocity from current and previous position
     e->velocity = e->position - e->prev_position;
 	if (flag)
@@ -149,7 +153,7 @@ cPlaneCollider::cPlaneCollider() : normal(dvec3(0, 1.0, 0)), cCollider("PlaneCol
 
 cPlaneCollider::~cPlaneCollider() {}
 
-cSpring::cSpring(cPhysics *other, cPhysics *p, float sc, float rl) : b(p),a(other), springConstant(sc), restLength(rl)
+cSpring::cSpring(cPhysics *other, cPhysics *p, float sc, float rl, float damper) : b(p),a(other), springConstant(sc), restLength(rl), dampingFactor(damper)
 {
 }
 
@@ -165,6 +169,10 @@ void cSpring::update(double delta)
 
 	force = normalize(force);
 	force *= -magnitude;
+
+	vec3 dampForce = b->velocity - a->velocity;
+	dampForce *= dampingFactor;
+	force -= dampForce;
 	b->AddImpulse(force);
 	a->AddImpulse(-force);
 }
