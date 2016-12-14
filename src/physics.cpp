@@ -19,14 +19,14 @@ void Resolve(const collisionInfo &ci) {
     const auto p = static_cast<cPhysics *>(a[0]);
     p->position += ci.normal * (ci.depth * 0.5);
     const double currentSpeed = glm::length(p->position - p->prev_position);
-    p->prev_position = p->position + vec3(-ci.normal * currentSpeed * coef);
+    p->prev_position = p->position /*+ vec3(-ci.normal * currentSpeed * coef)*/;
   }
   auto b = ci.c2->GetParent()->GetComponents("Physics");
   if (b.size() == 1) {
     const auto p = static_cast<cPhysics *>(b[0]);
     p->position += -ci.normal * (ci.depth * 0.5 * 0.1);
     const double currentSpeed = glm::length(p->position - p->prev_position);
-    p->prev_position = p->position + vec3(ci.normal * currentSpeed * coef);
+    p->prev_position = p->position /*+ vec3(ci.normal * currentSpeed * coef)*/;
   }
 }
 

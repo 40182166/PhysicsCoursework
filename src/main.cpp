@@ -13,17 +13,23 @@ using namespace glm;
 
 #define physics_tick 1.0 / 60.0
 
+double xpos = 0.0f;
+double ypos = 0.0f;
+free_camera free_cam;
+target_camera camT;
+int Cam;
+
 static vector<unique_ptr<Entity>> ClothParticles;
 static vector<cSpring> springList;
 static unique_ptr<Entity> floorEnt;
 
 static vector<unique_ptr<Entity>> balls;
 
-int rows = 9;
+int rows = 20;
 float stretchConstant = 60.0f;
 float shearConstant = 30.0f;
-float bendingConstant = 1.0f;
-float naturalLength = 2.0f;
+float bendingConstant = 10.0f;
+float naturalLength = 1.0f;
 float dampingFactor = 100.0f;
 
 unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
@@ -60,7 +66,7 @@ void Cloth()
 	{
 		for (int z = 0; z < rows; z++)
 		{
-			unique_ptr<Entity> particle = CreateParticle(x*2.0, (z + 7)*2.0, -20.0, 1.0);
+			unique_ptr<Entity> particle = CreateParticle(x*1.0, (z + 10)*1.0, -20.0 , 1.0);
 			auto p = static_cast<cPhysics *>(particle->GetComponents("Physics")[0]);
 			ClothParticles.push_back(move(particle));
 		}
@@ -124,10 +130,6 @@ void updateCloth()
 			//Bending springs
 			if (z % 2 == 0 || z == 0)
 			{
-				////diagonal shear spring
-				//cSpring aa = cSpring(getParticle(x + 2, z + 2), getParticle(x, z), bendingConstant, (naturalLength * sqrt(2.0)), dampingFactor, GREEN);
-				//aa.update(1.0);
-				//springList.push_back(aa);
 				if (z + 2 < rows)
 				{
 					//vertical bending spring
@@ -153,7 +155,7 @@ void updateCloth()
 				if (x + 2 < rows && z + 2 < rows)
 				{
 					//diagonal shear spring
-					cSpring aa = cSpring(getParticle(x + 2, z + 2), getParticle(x, z), 50.0, (naturalLength * sqrt(2.0)) * 4, dampingFactor, AQUA);
+					cSpring aa = cSpring(getParticle(x + 2, z + 2), getParticle(x, z), 50.0, (naturalLength * sqrt(2.0)) * 2, dampingFactor, AQUA);
 					aa.update(1.0);
 					springList.push_back(aa);
 				}
@@ -175,9 +177,9 @@ void fixTopRow()
 	}
 }
 
-bool update(double delta_time) {
-	static double t = 0.0;
-	static double accumulator = 0.0;
+bool update(float delta_time) {
+	static float t = 0.0;
+	static float accumulator = 0.0;
 	accumulator += delta_time;
 
 	while (accumulator > physics_tick) {
@@ -191,7 +193,72 @@ bool update(double delta_time) {
 	}
 
 	updateCloth();
-	fixTopRow();
+	//fixTopRow();
+
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_F))
+	{
+		Cam = 1;
+	}
+
+	//while freecam is in use
+	if (Cam == 1)
+	{
+		//Mouse cursor is disabled and used to rotate freecam
+		glfwSetInputMode(renderer::get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+		//Get mouse position for freecam
+		double deltax, deltay;
+		glfwGetCursorPos(renderer::get_window(), &deltax, &deltay);
+		double tempx = deltax;
+		double tempy = deltay;
+		deltax -= xpos;
+		deltay -= ypos;
+		double ratio_width = (double)renderer::get_screen_width() / (double)renderer::get_screen_height();
+		double ratio_height = 1.0 / ratio_width;
+		deltax *= ratio_width * delta_time / 10;
+		deltay *= -ratio_height * delta_time / 10;
+
+		//Rotate freecam based on the mouse coordinates
+		free_cam.rotate(deltax, deltay);
+
+		// set last cursor pos
+		xpos = tempx;
+		ypos = tempy;
+
+		//Movement (freecam)
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_W))
+		{
+			free_cam.move(vec3(0.0, 0.0, 10.0) * delta_time);
+		}
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_S))
+		{
+			free_cam.move(vec3(0.0, 0.0, -10.0) * delta_time);
+		}
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_A))
+		{
+			free_cam.move(vec3(-10.0, 0.0, 0.0) * delta_time);
+		}
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_D))
+		{
+			free_cam.move(vec3(10.0, 0.0, 0.0) * delta_time);
+		}
+
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_UP))
+		{
+			free_cam.move(vec3(0.0, 10.0, 0.0) * delta_time);
+		}
+		if (glfwGetKey(renderer::get_window(), GLFW_KEY_DOWN))
+		{
+			free_cam.move(vec3(0.0, -10.0, 0.0) * delta_time);
+		}
+		//Update freecam
+		free_cam.update(delta_time);
+
+		
+
+		phys::SetCameraTarget(free_cam.get_target());
+		phys::SetCameraPos(free_cam.get_position());
+	}
 
 	phys::Update(delta_time);
 	return true;
@@ -201,8 +268,12 @@ bool load_content() {
 	phys::Init();
 	Cloth();
 	floorEnt = unique_ptr<Entity>(new Entity());
+
 	floorEnt->AddComponent(unique_ptr<Component>(new cPlaneCollider()));
-	
+
+	free_cam.set_target(vec3(5.0, -2.0, 0.0));
+	free_cam.set_position(vec3(10.0f, 40.0f, -50.0f));
+
 	phys::SetCameraPos(vec3(10.0f, 40.0f, -50.0f));
 	phys::SetCameraTarget(vec3(0.0f, 0.0f, 0));
 	InitPhysics();
