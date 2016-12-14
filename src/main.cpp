@@ -17,7 +17,7 @@ double xpos = 0.0f;
 double ypos = 0.0f;
 free_camera free_cam;
 target_camera camT;
-int Cam;
+bool isCam = false;
 
 static vector<unique_ptr<Entity>> ClothParticles;
 static vector<cSpring> springList;
@@ -25,14 +25,17 @@ static unique_ptr<Entity> floorEnt;
 
 static vector<unique_ptr<Entity>> balls;
 
-int rows = 20;
-float stretchConstant = 60.0f;
-float shearConstant = 30.0f;
-float bendingConstant = 10.0f;
-float naturalLength = 1.0f;
+int rows = 10;
+float stretchConstant = 100.0f;
+float shearConstant = 80.0f;
+float bendingConstant = 80.0f;
+float diagonalBendingConstant = 10.0f;
+float naturalLength = 0.3f;
 float dampingFactor = 100.0f;
 
-unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
+vector<glm::vec3> grid;
+
+unique_ptr<Entity> CreateParticle(float xPos, float yPos, float zPos, double myMass) {
 	unique_ptr<Entity> ent(new Entity());
 	ent->SetPosition(vec3(xPos, yPos, zPos));
 	cPhysics *phys = new cPhysics();
@@ -42,7 +45,7 @@ unique_ptr<Entity> CreateParticle(int xPos, int yPos, int zPos, double myMass) {
 	renderComponent->SetColour(phys::RandomColour());
 	ent->AddComponent(physComponent);
 	cSphereCollider *coll = new cSphereCollider();
-	coll->radius = 0.3f;
+	coll->radius = 0.001f;
 	ent->AddComponent(unique_ptr<Component>(coll));
 	ent->AddComponent(unique_ptr<Component>(move(renderComponent)));
 	return ent;
@@ -66,7 +69,7 @@ void Cloth()
 	{
 		for (int z = 0; z < rows; z++)
 		{
-			unique_ptr<Entity> particle = CreateParticle(x*1.0, (z + 10)*1.0, -20.0 , 1.0);
+			unique_ptr<Entity> particle = CreateParticle(x*0.3, 10.0, (z - 10)*0.3, 1.0);
 			auto p = static_cast<cPhysics *>(particle->GetComponents("Physics")[0]);
 			ClothParticles.push_back(move(particle));
 		}
@@ -128,8 +131,6 @@ void updateCloth()
 			}
 
 			//Bending springs
-			if (z % 2 == 0 || z == 0)
-			{
 				if (z + 2 < rows)
 				{
 					//vertical bending spring
@@ -137,10 +138,7 @@ void updateCloth()
 					aa.update(1.0);
 					springList.push_back(aa);
 				}
-			}
 
-			if (x % 2 == 0 || x == 0)
-			{
 				if (x + 2 < rows)
 				{
 					//horizontal bending spring
@@ -148,22 +146,41 @@ void updateCloth()
 					aa.update(1.0);
 					springList.push_back(aa);
 				}
-			}
 
-			if (z % 2 == 0 && x % 2 == 0)
-			{
 				if (x + 2 < rows && z + 2 < rows)
 				{
-					//diagonal shear spring
-					cSpring aa = cSpring(getParticle(x + 2, z + 2), getParticle(x, z), 50.0, (naturalLength * sqrt(2.0)) * 2, dampingFactor, AQUA);
+					//diagonal bending spring
+					cSpring aa = cSpring(getParticle(x + 2, z + 2), getParticle(x, z), diagonalBendingConstant, (naturalLength * sqrt(2.0)) * 2, dampingFactor, AQUA);
 					aa.update(1.0);
 					springList.push_back(aa);
 				}
-			}
+
+				if (x - 2 > 0 && z + 2 < rows)
+				{
+					//diagonal bending spring
+					cSpring aa = cSpring(getParticle(x - 1, z + 1), getParticle(x, z), diagonalBendingConstant, (naturalLength * sqrt(2.0)) * 3, dampingFactor, GREY);
+					aa.update(1.0);
+					springList.push_back(aa);
+				}
 
 		}
 	}
 }
+
+
+void generateWind(double strength, const vec3 direction)
+{
+
+	for (auto &e : ClothParticles) {
+
+		float random = ((float)rand() / RAND_MAX) * strength;
+		auto p = static_cast<cPhysics *>(e->GetComponents("Physics")[0]);
+		vec3 particleN = normalize(p->position);
+		vec3 windForce = direction  * random;
+		p->AddImpulse(windForce);
+	}
+}
+
 
 void fixTopRow()
 {
@@ -174,6 +191,41 @@ void fixTopRow()
 		getParticle(x, z)->position = getParticle(x, z)->prev_position;
 		getParticle(x, z)->fixed = true;
 		x++;
+	}
+}
+
+void fixBottomRow()
+{
+	int z = 0;
+	int x = 0;
+	while (x < rows)
+	{
+		getParticle(x, z)->position = getParticle(x, z)->prev_position;
+		getParticle(x, z)->fixed = true;
+		x++;
+	}
+}
+
+void fixCorners()
+{
+	getParticle(0, 0)->position = getParticle(0, 0)->prev_position;
+	getParticle(0, 0)->fixed = true;
+
+	getParticle(0, rows - 1)->position = getParticle(0, rows - 1)->prev_position;
+	getParticle(0, rows - 1)->fixed = true;
+
+	getParticle(rows - 1, 0)->position = getParticle(rows - 1, 0)->prev_position;
+	getParticle(rows - 1, 0)->fixed = true;
+
+	getParticle(rows - 1, rows - 1)->position = getParticle(rows - 1, rows - 1)->prev_position;
+	getParticle(rows - 1, rows - 1)->fixed = true;
+}
+
+void releaseCloth()
+{
+	for (auto &e : ClothParticles) {
+		auto p = static_cast<cPhysics *>(e->GetComponents("Physics")[0]);
+		p->fixed = false;
 	}
 }
 
@@ -188,20 +240,32 @@ bool update(float delta_time) {
 		t += physics_tick;
 	}
 
+
 	for (auto &e : ClothParticles) {
 		e->Update(delta_time);
+
 	}
+
+	generateWind(4.0, vec3(1.2, ((float)rand()) / ((float)RAND_MAX) * 20.0,  1.2));
+	
 
 	updateCloth();
 	//fixTopRow();
+	//fixBottomRow();
+	fixCorners();
 
 	if (glfwGetKey(renderer::get_window(), GLFW_KEY_F))
 	{
-		Cam = 1;
+		isCam = true;
+	}
+
+	if (glfwGetKey(renderer::get_window(), GLFW_KEY_R))
+	{
+		releaseCloth();
 	}
 
 	//while freecam is in use
-	if (Cam == 1)
+	if (isCam == true)
 	{
 		//Mouse cursor is disabled and used to rotate freecam
 		glfwSetInputMode(renderer::get_window(), GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -251,14 +315,22 @@ bool update(float delta_time) {
 		{
 			free_cam.move(vec3(0.0, -10.0, 0.0) * delta_time);
 		}
-		//Update freecam
-		free_cam.update(delta_time);
-
 		
 
+		free_cam.update(delta_time);
 		phys::SetCameraTarget(free_cam.get_target());
 		phys::SetCameraPos(free_cam.get_position());
 	}
+	else 
+	{
+		glfwSetInputMode(renderer::get_window(), GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+	}
+
+	isCam = false;
+
+
+	phys::SetCameraTarget(free_cam.get_target());
+	phys::SetCameraPos(free_cam.get_position());
 
 	phys::Update(delta_time);
 	return true;
@@ -271,11 +343,12 @@ bool load_content() {
 
 	floorEnt->AddComponent(unique_ptr<Component>(new cPlaneCollider()));
 
-	free_cam.set_target(vec3(5.0, -2.0, 0.0));
+	free_cam.set_target(vec3(1.0, -8.0, 8.0));
 	free_cam.set_position(vec3(10.0f, 40.0f, -50.0f));
 
 	phys::SetCameraPos(vec3(10.0f, 40.0f, -50.0f));
-	phys::SetCameraTarget(vec3(0.0f, 0.0f, 0));
+	phys::SetCameraTarget(vec3(0.0f, 20.0f, 0));
+
 	InitPhysics();
 	return true;
 }
@@ -287,9 +360,16 @@ bool render() {
 
 	phys::DrawScene();
 
-	for (auto &e : springList) {
+	/*for (auto &e : springList) {
 		e.Render();
+	}*/
+
+	grid.clear();
+	for (auto &e : ClothParticles) {
+		grid.push_back(e->GetPosition());
 	}
+
+	phys::DrawGrid(&grid[0], rows*rows, rows, phys::solid);
 	return true;
 }
 

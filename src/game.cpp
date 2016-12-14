@@ -137,13 +137,13 @@ void cShapeRenderer::Update(double delta) {}
 void cShapeRenderer::Render() {
   switch (shape) {
   case SPHERE:
-    phys::DrawSphere(Ent_->GetPosition(), 0.3f, col_);
+    phys::DrawSphere(Ent_->GetPosition(), 0.001f, col_);
     break;
   case BOX:
     phys::DrawCube(Ent_->GetPosition(), Ent_->GetScale(), col_);
     break;
   default:
-    phys::DrawSphere(Ent_->GetPosition(), 0.3f, col_);
+    phys::DrawSphere(Ent_->GetPosition(), 0.001f, col_);
     break;
   }
 }
