@@ -166,7 +166,7 @@ cSpring::cSpring(cPhysics *other, cPhysics *p, float sc, float rl, float damper,
 void cSpring::update()
 {
 
-	//focre is position of the second particle - position of the first particle
+	//force is position of the second particle - position of the first particle
 	vec3 force = b->position;
 	force -= a->position;
 
