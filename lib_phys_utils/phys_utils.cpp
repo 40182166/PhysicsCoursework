@@ -245,7 +245,7 @@ void DrawGrid(const glm::vec3 *points, const size_t amount, const size_t rowsize
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), NULL);
 
     GLfloat colour[4];
-    RGBAInt32 col = AQUA;
+    RGBAInt32 col = RED;
     col.tofloat(colour);
     glUniformMatrix4fv(effB.get_uniform_location("MVP"), 1, GL_FALSE, value_ptr(PV));
     glUniform4fv(effB.get_uniform_location("colour_override"), 1, &colour[0]);

@@ -9,6 +9,7 @@ public:
   glm::vec3 prev_position;
   glm::dvec3 velocity;
   glm::dvec3 forces;
+  glm::dvec3 gravity = glm::dvec3(0, -10.0, 0);
   double mass;
   bool fixed = false;
   virtual void Update(double delta);
@@ -40,7 +41,7 @@ class cSpring
 	float restLength;
 public:
 	cSpring(cPhysics *particle, cPhysics *other, float springConstant, float restLength, float damping, phys::RGBAInt32 col);
-	virtual void update( double delta);
+	virtual void update();
 	void Render();
 };
 

@@ -6,8 +6,8 @@ using namespace glm;
 static vector<cPhysics *> physicsScene;
 static vector<cCollider *> colliders;
 
-static dvec3 gravity = dvec3(0, -10.0, 0);
-static dvec3 initialV = dvec3(-0.1, 0.1, 0.0);
+//static dvec3 gravity = dvec3(0, -10.0, 0);
+static dvec3 initialV = dvec3(0.0, 0.0, 0.0);
 bool flag = false;
 
 void Resolve(const collisionInfo &ci) {
@@ -92,11 +92,16 @@ void UpdatePhysics(const double t, const double dt) {
   }
   // Integrate
   for (auto &e : physicsScene) {
-    e->Render();
-	if (e->fixed == true)
-	{
-		continue;
-	}
+	  if (e->fixed == false)
+	  {
+		  e->Render();
+	  }
+	  else
+	  {
+		  continue;
+	  }
+    
+	
     // calcualte velocity from current and previous position
     e->velocity = e->position - e->prev_position;
 	if (flag)
@@ -107,7 +112,7 @@ void UpdatePhysics(const double t, const double dt) {
     // set previous position to current position
     e->prev_position = e->position;
     // position += v + a * (dt^2)
-		e->position += e->velocity + ((e->forces * (1.0 / e->mass)) + gravity) * pow(dt, 2);
+		e->position += e->velocity + ((e->forces * (1.0 / e->mass)) + e->gravity) * pow(dt, 2);
     
     e->forces = dvec3(0);
     if (e->position.y <= 0.0f) {
@@ -157,7 +162,7 @@ cSpring::cSpring(cPhysics *other, cPhysics *p, float sc, float rl, float damper,
 {
 }
 
-void cSpring::update(double delta)
+void cSpring::update()
 {
 
 	vec3 force = b->position;
