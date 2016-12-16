@@ -9,6 +9,7 @@ public:
   glm::vec3 prev_position;
   glm::dvec3 velocity;
   glm::dvec3 forces;
+  //gravity is set in the particle so it can be modified
   glm::dvec3 gravity = glm::dvec3(0, -10.0, 0);
   double mass;
   bool fixed = false;
@@ -31,44 +32,29 @@ public:
 private:
 };
 
+//spring class
 class cSpring
 {
+	//first particle
 	cPhysics *a;
+	//second particle
 	cPhysics *b;
+	//coloour of the spring
 	phys::RGBAInt32 col;
+	//spring stiffness
 	float springConstant;
+	//damper force
 	float dampingFactor;
+	//rest length of the spring
 	float restLength;
 public:
+	//spring constructor passing second particle and first particle, with all the constants and the colour
 	cSpring(cPhysics *particle, cPhysics *other, float springConstant, float restLength, float damping, phys::RGBAInt32 col);
+	//method to update the spring that does all the spring physics calculations
 	virtual void update();
+	//for testing - renders the spring as a line
 	void Render();
 };
-
-//class ParticleForceGenerator
-//{
-//public:
-//	virtual void Update(Entity *particle, double delta) = 0;
-//};
-//
-//class ParticleForceRegistry
-//{
-//protected:
-//	struct ParticleForceRegistration
-//	{
-//		Entity *particle;
-//		ParticleForceGenerator *fg;
-//	};
-//
-//	typedef std::vector<ParticleForceRegistration> Registry;
-//	Registry registrations;
-//
-//public:
-//	void add(Entity *particle, ParticleForceGenerator *fg);
-//	void remove(Entity *particle, ParticleForceGenerator *fg);
-//	void clear();
-//	void Update(double delta);
-//};
 
 class cRigidBody : public cPhysics {
 public:

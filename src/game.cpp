@@ -137,6 +137,7 @@ void cShapeRenderer::Update(double delta) {}
 void cShapeRenderer::Render() {
   switch (shape) {
   case SPHERE:
+	  //radius of the sphere has been removed
     phys::DrawSphere(Ent_->GetPosition(), 0.05f, col_);
     break;
   case BOX:
